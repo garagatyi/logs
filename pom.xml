@@ -17,7 +17,7 @@
     <parent>
         <artifactId>che-parent</artifactId>
         <groupId>org.eclipse.che</groupId>
-        <version>6.12.0</version>
+        <version>6.13.0-SNAPSHOT</version>
     </parent>
     <groupId>com.redhat.che-logs</groupId>
     <artifactId>logs-parent</artifactId>
@@ -30,6 +30,7 @@
         <module>assembly</module>
     </modules>
     <properties>
+        <che.version>6.13.0-SNAPSHOT</che.version>
         <redhat.logs.version>1.0.0-SNAPSHOT</redhat.logs.version>
         <sentry.version>1.7.2</sentry.version>
     </properties>
@@ -50,11 +51,6 @@
                 <groupId>io.sentry</groupId>
                 <artifactId>sentry-logback</artifactId>
                 <version>${sentry.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tomcat</groupId>
-                <artifactId>tomcat-servlet-api</artifactId>
-                <version>${org.apache.tomcat.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.che</groupId>
