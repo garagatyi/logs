@@ -22,7 +22,7 @@
     </parent>
     <artifactId>assembly</artifactId>
     <packaging>pom</packaging>
-    <name>Assemblies :: Main/Tomcat</name>
+    <name>Eclipse Che :: Assemblies :: Tomcat</name>
     <dependencies>
         <dependency>
             <groupId>com.redhat.che-logs</groupId>
@@ -98,7 +98,7 @@
                     <descriptors>
                         <descriptor>${project.basedir}/src/assembly/assembly.xml</descriptor>
                     </descriptors>
-                    <finalName>eclipse-che-fabric8-${project.version}</finalName>
+                    <finalName>eclipse-che-logs-propagator-${project.version}</finalName>
                     <tarLongFileMode>posix</tarLongFileMode>
                 </configuration>
             </plugin>

@@ -53,16 +53,20 @@ objects:
       spec:
         containers:
         - env:
-          - name: CHE_MULTIUSER
-            value: "${CHE_MULTIUSER}"
           - name: CHE_API
-            value: "${PROTOCOL}://che-${NAMESPACE}.${ROUTING_SUFFIX}/api"
+            value: "${CHE_API}"
           - name: CHE_DEBUG_SERVER
             value: "false"
-          - name: CHE_LOCAL_CONF_DIR
-            value: "/etc/conf"
-          - name: CHE_LOGS_DIR
-            value: "/data/logs"
+          - name: CHE_LOGS_SENTRY_LEVEL
+            value: "WARN"
+          - name: SENTRY_DSN
+            value: ""
+          - name: SENTRY_STACKTRACE_APP_PACKAGES
+            value: "com.redhat,org.eclipse.che"
+          - name: SENTRY_ENVIRONMENT
+            value: "dev"
+          - name: SENTRY_RELEASE
+            value: "dev"
           - name: CHE_LOG_LEVEL
             value: "INFO"
           - name: CHE_KEYCLOAK_AUTH__SERVER__URL
@@ -72,9 +76,7 @@ objects:
               -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90
               -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Dsun.zip.disableMemoryMapping=true
               -Xms20m "
-          - name: PROTOCOL
-            value: "${PROTOCOL}"
-          image: ${IMAGE_CHE}:${CHE_VERSION}
+          image: ${IMAGE}:${IMAGE_VERSION}
           imagePullPolicy: "${PULL_POLICY}"
           livenessProbe:
             httpGet:
@@ -112,38 +114,20 @@ objects:
     - type: ConfigChange
 
 parameters:
-- name: CHE_VERSION
+- name: IMAGE_VERSION
   displayName: Eclipse Che version
   description: Eclipse Che version which defaults to nightly
   value: nightly
-- name: IMAGE_CHE
-  displayName: Eclipse Che server image
-  description: Che server Docker image. Defaults to eclipse/che-server
-  value: eclipse/che-server
-- name: CHE_MULTIUSER
-  displayName: Che Multi-user flavor
-  description: False i.e. single user by default
-  value: 'false'
-- name: PROTOCOL
-  displayName: HTTP protocol
-  description: Protocol to be used in Che communications
-  value: http
-- name: WS_PROTOCOL
-  displayName: Websocket protocol
-  description: Websocket protocol to be used in Che communications. Defaults to ws. Set to wss only if TLS is true and https protocol is defined
-  value: ws
-- name: TLS
-  displayName: HTTPS support
-  description: HTTPS support in Che
-  value: 'false'
-- name: CHE_KEYCLOAK_ADMIN_REQUIRE_UPDATE_PASSWORD
-  displayName: Admin password update
-  description: Force an admin to update password after 1st login. True by default
-  value: 'true'
+- name: CHE_API
+  displayName: Eclipse Che API URL
+  description: Eclipse Che API (including path to API)
+- name: IMAGE
+  displayName: Eclipse Che logs propagator server image
+  description: Che logs propagator server Docker image. Defaults to eclipse/che-logs
+  value: eclipse/che-logs
 - name: CHE_KEYCLOAK_AUTH__SERVER__URL
   displayName: Identity provider URL
   description: URL of a remote identity provider. Defaults to Keycloak bundled with Che multi user
-  value: '${PROTOCOL}://keycloak-${NAMESPACE}.${ROUTING_SUFFIX}/auth'
 - name: STRATEGY
   displayName: Update Strategy
   description: Che server update strategy. Defaults to Recreate. Use Rolling only if Che deployment does not use PVC
