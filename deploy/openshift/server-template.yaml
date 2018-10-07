@@ -1,0 +1,157 @@
+#
+# Copyright (c) 2012-2018 Red Hat, Inc.
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+
+---
+kind: Template
+apiVersion: v1
+metadata:
+  name: che-logs-propagator
+  annotations:
+    description: Che logs propagator
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: che-logs-propagator
+  spec:
+    ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: che-logs-propagator
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: che-logs-propagator
+  spec:
+    to:
+      kind: Service
+      name: che-logs-propagator
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    name: che-logs-propagator
+  spec:
+    replicas: 1
+    revisionHistoryLimit: 2
+    selector:
+      app: che-logs-propagator
+    strategy:
+      type: ${STRATEGY}
+    template:
+      metadata:
+        labels:
+          app: che-logs-propagator
+      spec:
+        containers:
+        - env:
+          - name: CHE_MULTIUSER
+            value: "${CHE_MULTIUSER}"
+          - name: CHE_API
+            value: "${PROTOCOL}://che-${NAMESPACE}.${ROUTING_SUFFIX}/api"
+          - name: CHE_DEBUG_SERVER
+            value: "false"
+          - name: CHE_LOCAL_CONF_DIR
+            value: "/etc/conf"
+          - name: CHE_LOGS_DIR
+            value: "/data/logs"
+          - name: CHE_LOG_LEVEL
+            value: "INFO"
+          - name: CHE_KEYCLOAK_AUTH__SERVER__URL
+            value: "${CHE_KEYCLOAK_AUTH__SERVER__URL}"
+          - name: JAVA_OPTS
+            value: "-XX:MaxRAMFraction=2 -XX:+UseParallelGC -XX:MinHeapFreeRatio=10
+              -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90
+              -XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -Dsun.zip.disableMemoryMapping=true
+              -Xms20m "
+          - name: PROTOCOL
+            value: "${PROTOCOL}"
+          image: ${IMAGE_CHE}:${CHE_VERSION}
+          imagePullPolicy: "${PULL_POLICY}"
+          livenessProbe:
+            httpGet:
+              path: /api/system/state
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 50
+            failureThreshold: 3
+            timeoutSeconds: 2
+          readinessProbe:
+            httpGet:
+              path: /api/system/state
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 25
+            timeoutSeconds: 5
+            failureThreshold: 5
+          name: che
+          ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+          - containerPort: 8000
+            name: http-debug
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              memory: 256Mi
+          terminationMessagePath: "/dev/termination-log"
+          terminationMessagePolicy: File
+        restartPolicy: Always
+        terminationGracePeriodSeconds: 360
+    triggers:
+    - type: ConfigChange
+
+parameters:
+- name: CHE_VERSION
+  displayName: Eclipse Che version
+  description: Eclipse Che version which defaults to nightly
+  value: nightly
+- name: IMAGE_CHE
+  displayName: Eclipse Che server image
+  description: Che server Docker image. Defaults to eclipse/che-server
+  value: eclipse/che-server
+- name: CHE_MULTIUSER
+  displayName: Che Multi-user flavor
+  description: False i.e. single user by default
+  value: 'false'
+- name: PROTOCOL
+  displayName: HTTP protocol
+  description: Protocol to be used in Che communications
+  value: http
+- name: WS_PROTOCOL
+  displayName: Websocket protocol
+  description: Websocket protocol to be used in Che communications. Defaults to ws. Set to wss only if TLS is true and https protocol is defined
+  value: ws
+- name: TLS
+  displayName: HTTPS support
+  description: HTTPS support in Che
+  value: 'false'
+- name: CHE_KEYCLOAK_ADMIN_REQUIRE_UPDATE_PASSWORD
+  displayName: Admin password update
+  description: Force an admin to update password after 1st login. True by default
+  value: 'true'
+- name: CHE_KEYCLOAK_AUTH__SERVER__URL
+  displayName: Identity provider URL
+  description: URL of a remote identity provider. Defaults to Keycloak bundled with Che multi user
+  value: '${PROTOCOL}://keycloak-${NAMESPACE}.${ROUTING_SUFFIX}/auth'
+- name: STRATEGY
+  displayName: Update Strategy
+  description: Che server update strategy. Defaults to Recreate. Use Rolling only if Che deployment does not use PVC
+  value: 'Recreate'
+- name: PULL_POLICY
+  displayName: Che server image pull policy
+  description: Always pull by default. Can be IfNotPresent
+  value: 'Always'
+labels:
+  app: che-logs-propagator
+  template: che-logs-propagator
